@@ -1,18 +1,49 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.validators import UnicodeUsernameValidator
+
+ROLES = (
+        ('user', 'User'),
+        ('moderator', 'Moder'),
+        ('admin', 'Admin'),
+    )
 
 
 class User(AbstractUser):
+    username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(max_length=150,
                                 unique=True,
                                 blank=False,
-                                null=False
+                                null=False,
+                                validators=[username_validator],
                                 )
     email = models.EmailField(unique=True,
                               max_length=255,
                               blank=False,
                               null=False
                               )
-    role = models.CharField()
-    confirmation_code = models.CharField()
+    role = models.CharField(max_length=20,
+                            choices=ROLES,
+                            default='user',
+                            blank=True
+                            )
+    confirmation_code = models.CharField(max_length=255,
+                                         null=True,
+                                         blank=False,
+                                         )
+
+    first_name = models.CharField(max_length=30, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+
+    @property
+    def is_user(self):
+        return self.role == 'user'
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
