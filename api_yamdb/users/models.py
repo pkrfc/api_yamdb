@@ -35,6 +35,11 @@ class User(AbstractUser):
 
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
+    bio = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='О себе'
+    )
 
     @property
     def is_user(self):
