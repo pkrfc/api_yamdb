@@ -1,7 +1,6 @@
 from rest_framework import viewsets, filters, status
 from users.models import User
-from api_yamdb.settings import EMAIL
-from .serializers import UserSerializer, SignupSerializer, TokenSerializer
+from .serializers import UserSerializer, SignupSerializer, TokenSerializer, ProfileSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
@@ -14,16 +13,17 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
-    search_fields = ('username',)
-    permission_classes = (IsOnlyAdmin,)
     lookup_field = 'username'
+    permission_classes = (IsOnlyAdmin,)
+    serializer_class = UserSerializer
     filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
     @action(
         detail=False,
         methods=('GET', 'PATCH'),
-        permission_classes=[IsAuthenticated, ]
+        permission_classes=[IsAuthenticated, ],
+        serializer_class=ProfileSerializer
     )
     def me(self, request):
         if request.method == 'GET':
@@ -49,15 +49,12 @@ def sign_up(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data.get('username')
     email = serializer.validated_data.get('email')
-    if username == 'me':
-        return Response(
-            'Такую учётную запись нельзя зарегестрировать',
-            status=status.HTTP_400_BAD_REQUEST)
     user_email = User.objects.filter(email=email)
     user_name = User.objects.filter(username=username)
     if user_email.exists() or user_name.exists():
         return Response(
-            status=status.HTTP_400_BAD_REQUEST)
+            status=status.HTTP_400_BAD_REQUEST
+        )
     confirmation_code = str(uuid.uuid4())
     User.objects.create(
         username=username,
@@ -66,7 +63,7 @@ def sign_up(request):
     send_mail(
         subject='Код подтверждения yamdb.ru',
         message=f'"confirmation_code": "{confirmation_code}"',
-        from_email=EMAIL,
+        from_email='yamdb@yamdb.ru',
         recipient_list=[email, ],
         fail_silently=True
     )

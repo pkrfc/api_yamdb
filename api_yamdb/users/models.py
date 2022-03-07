@@ -52,3 +52,8 @@ class User(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == 'moderator'
+
+    def __str__(self):
+        return self.username
+
+
