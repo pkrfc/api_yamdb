@@ -1,24 +1,22 @@
 from django.urls import include, path
-
 from rest_framework.routers import DefaultRouter
+from rest_framework import routers
 
-from .views import UserViewSet, sign_up, token
+from .views import CategoriesViewSet, GenreViewSet, TitlesViewSet, UserViewSet, sign_up, token
+
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='users')
 
-from rest_framework import routers
 
-from api.views import CategoriesViewSet, GenreViewSet, TitlesViewSet
 
 app_name = 'api'
 
-
-router = routers.DefaultRouter()
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='users')
 router.register(r'categories', CategoriesViewSet)
 router.register(r'genres', GenreViewSet)
 router.register(r'titles', TitlesViewSet)
->>>>>>> origin/develop_2
 
 
 urlpatterns = [

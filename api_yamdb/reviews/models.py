@@ -1,36 +1,7 @@
-from django.db import models
-
-
-class Review(models.Model):
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='reviews')
-    title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name='reviews')
-    text = models.TextField()
-    pub_date = models.DateTimeField(
-        'Дата добавления', auto_now_add=True, db_index=True)
-    score = models.IntegerField()
-
-    def __str__(self):
-        return self.text
-
-
-class Comment(models.Model):
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comments')
-    review = models.ForeignKey(
-        Review, on_delete=models.CASCADE, related_name='comments')
-    text = models.TextField()
-    pub_date = models.DateTimeField(
-        'Дата добавления', auto_now_add=True, db_index=True)
-
-    def __str__(self):
-        return self.text
-=======
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-
-from datetime import datetime as dt
+from django.db import models
+from users.models import User
 
 
 def validate_year(value):
@@ -102,3 +73,30 @@ class GenreTitles(models.Model):
     def __str__(self):
         return f'{self.genre} {self.titles}'
 
+
+
+class Review(models.Model):
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='reviews')
+    title = models.ForeignKey(
+        Titles, on_delete=models.CASCADE, related_name='reviews')
+    text = models.TextField()
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)
+    score = models.IntegerField()
+
+    def __str__(self):
+        return self.text
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='comments')
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)
+
+    def __str__(self):
+        return self.text

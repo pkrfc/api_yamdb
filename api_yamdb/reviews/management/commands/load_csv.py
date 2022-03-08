@@ -1,9 +1,8 @@
 from csv import DictReader
+
 from django.conf import settings
 from django.core.management import BaseCommand
-
-from reviews.models import Categories, Genre, Titles, GenreTitles
-
+from reviews.models import Categories, Genre, GenreTitles, Titles
 
 files_dict = {
     Categories: 'category.csv',

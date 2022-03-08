@@ -1,15 +1,27 @@
 
-from rest_framework import viewsets, filters, status
-from users.models import User
-from .serializers import UserSerializer, SignupSerializer, TokenSerializer, ProfileSerializer
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.decorators import action, api_view, permission_classes
-from .permissions import IsOnlyAdmin, IsAdminOrReadOnly, IsOwnerOrModeratorOrAdmin
+import uuid
+
+
+from api.pagination import ReviewsPagination
+from api.permissions import AdminOrReadOnly
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-import uuid
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import Categories, Genres, Titles, Comment, Review
+from users.models import User
+
+from .permissions import (AdminOrReadOnly, IsOnlyAdmin,
+                          IsOwnerOrModeratorOrAdmin, ReviewPermission)
+from .serializers import (CategoriesSerializer, CommentSerializer,
+                          GenreSerializer, ProfileSerializer, ReviewSerializer,
+                          SignupSerializer, TitlesSerializer, TokenSerializer,
+                          UserSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -88,20 +100,6 @@ def token(request):
     return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
 
 
-from rest_framework import filters, mixins, viewsets
-from api.pagination import ReviewsPagination
-from django_filters.rest_framework import DjangoFilterBackend
-
-from api.permissions import AdminOrReadOnly
-from reviews.models import Categories, Genres, Titles
-
-from .serializers import (
-    CategoriesSerializer,
-    GenreSerializer,
-    TitlesSerializer
-)
-
-
 class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
                             mixins.ListModelMixin, viewsets.GenericViewSet):
     pass
@@ -140,3 +138,35 @@ class TitlesViewSet(viewsets.ModelViewSet):
         'category', 'genre', 'name', 'year'
     )
 
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    filter_backends = (filters.SearchFilter,)
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
+
+    def get_queryset(self):
+        title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        queryset = title.reviews.all()
+        return queryset
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'),
+                                   title=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, review=review)
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'),
+                                   title=self.kwargs.get('title_id'))
+        queryset = review.comments.all()
+        return queryset

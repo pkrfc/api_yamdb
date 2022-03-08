@@ -1,42 +1,43 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets
+from rest_framework import filters, mixins, viewsets
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from api.models import Title
-
-from .permissions import ReviewPermission
 from .models import Comment, Review
+from .permissions import IsOwnerOrReadOnly
 from .serializers import CommentSerializer, ReviewSerializer
 
 
-class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+class MyViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+                viewsets.GenericViewSet):
+
+    pass
+
+
+class ReviewViewSet(MyViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    filter_backends = (filters.SearchFilter,)    
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('following__username',)
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(user=self.request.user)
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        queryset = title.reviews.all()
+        queryset = Review.objects.filter(user=self.request.user)
         return queryset
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+    permission_classes = [IsOwnerOrReadOnly]
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'),
-                                   title=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, review=review)
+        post_id = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        serializer.save(author=self.request.user, post=post_id)
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'),
-                                   title=self.kwargs.get('title_id'))        
-        queryset = review.comments.all()
+        post_id = get_object_or_404(Post, pk=self.kwargs.get('post_id'))
+        queryset = post_id.comments.all()
         return queryset
