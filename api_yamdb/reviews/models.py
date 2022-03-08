@@ -1,4 +1,6 @@
 from django.db import models
+from user.models import User
+from api.models import Title
 
 
 class Review(models.Model):
