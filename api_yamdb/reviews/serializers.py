@@ -3,6 +3,9 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
+from user.models import User
+from api.models import Title
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
@@ -11,22 +14,20 @@ class ReviewSerializer(serializers.ModelSerializer):
     score = serializers.IntegerField(max_value=10, min_value=1)
 
     def validate(self, data):
-        request = self.context.get('request')
-        following = data['following']
-        if request.user == following:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя'
-            )
-        return data
-
+        title_id = self.context['view'].kwargs.get('title_id')
+        user = self.context['request'].user
+        if self.context['request'].method == 'PATCH':
+            return data
+        review_exists = Review.objects.filter(title=title_id,
+                                                 author=user).exists()
+        if review_exists:
+            raise serializers.ValidationError('Вы уже оставили отзыв.')
+        return data    
 
     class Meta:
         model = Review
         fields = ('id', 'author', 'text', 'pub_date', 'score')
-        validators = [UniqueTogetherValidator(
-            queryset=Follow.objects.all(),
-            fields=('user', 'following')
-        )]
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
