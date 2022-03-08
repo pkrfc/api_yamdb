@@ -2,6 +2,7 @@ from csv import DictReader
 
 from django.conf import settings
 from django.core.management import BaseCommand
+
 from reviews.models import Categories, Genre, GenreTitles, Titles
 
 files_dict = {

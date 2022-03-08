@@ -1,9 +1,6 @@
 
 import uuid
 
-
-from api.pagination import ReviewsPagination
-from api.permissions import AdminOrReadOnly
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,7 +10,10 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from reviews.models import Categories, Genres, Titles, Comment, Review
+
+from api.pagination import ReviewsPagination
+from api.permissions import AdminOrReadOnly
+from reviews.models import Categories, Comment, Genres, Review, Titles
 from users.models import User
 
 from .permissions import (AdminOrReadOnly, IsOnlyAdmin,
