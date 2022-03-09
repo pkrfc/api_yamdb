@@ -1,5 +1,6 @@
 from datetime import datetime as dt
 
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -88,7 +89,9 @@ class TitlesSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         self.fields['genre'] = GenreSerializer(many=True)
         self.fields['category'] = CategoriesSerializer()
+        # self.fields['category'] = CategoriesSerializer()
         return super(TitlesSerializer, self).to_representation(obj)
+
 
     def validate_year(self, value):
         year = dt.now().year

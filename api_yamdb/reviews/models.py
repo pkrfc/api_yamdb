@@ -74,7 +74,7 @@ class GenreTitles(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.genre} {self.titles}'
+        return f'{self.genre} {self.title}'
 
 
 class Review(models.Model):
@@ -86,6 +86,11 @@ class Review(models.Model):
     pub_date = models.DateTimeField(
         'Дата добавления', auto_now_add=True, db_index=True)
     score = models.IntegerField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=['author', 'title'], name='unique.review')
+        ]
 
     def __str__(self):
         return self.text

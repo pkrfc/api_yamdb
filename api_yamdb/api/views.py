@@ -1,8 +1,7 @@
 import uuid
-
+from django.db.models import Avg
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
@@ -10,15 +9,26 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .pagination import ReviewsPagination
 from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
-from .permissions import (AdminOrReadOnly, IsOnlyAdmin, ReviewPermission)
+from .filters import TitlesFilter
+from .pagination import TitlesPagination
+from .permissions import (AdminOrReadOnly, IsOnlyAdmin, ReviewPermission, IsOwnerOrModeratorOrAdmin)
 from .serializers import (CategoriesSerializer, CommentSerializer,
                           GenreSerializer, ProfileSerializer, ReviewSerializer,
                           SignupSerializer, TitlesSerializer, TokenSerializer,
                           UserSerializer)
+
+
+class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin, viewsets.GenericViewSet):
+    pass
+
+
+class CreateListViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+                        viewsets.GenericViewSet):
+    pass
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -97,48 +107,58 @@ def token(request):
     return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
 
 
-class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
-                            mixins.ListModelMixin, viewsets.GenericViewSet):
-    pass
-
-
-class CreateListViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                        viewsets.GenericViewSet):
-    pass
-
-
-class CategoriesViewSet(CreateListViewSet):
+class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
-    permission_classes = (IsOnlyAdmin,)
-    pagination_class = ReviewsPagination
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
+    @action(
+        detail=False, url_path=r'(?P<slug>\w+)',
+        methods=['delete']
+    )
+    def destroy_category(self, request, slug):
+        category = Categories.objects.filter(slug=slug)
+        serializer = self.get_serializer(category, many=True)
+        category.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
-class GenreViewSet(CreateListViewSet):
+class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsOnlyAdmin,)
-    pagination_class = ReviewsPagination
+    permission_classes = (AdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+
+    @action(
+        detail=False, url_path=r'(?P<slug>\w+)',
+        methods=['delete']
+    )
+    def destroy_genre(self, request, slug):
+        genre = Genres.objects.filter(slug=slug)
+        serializer = self.get_serializer(genre, many=True)
+        genre.delete()
+        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (AdminOrReadOnly,)
-    pagination_class = ReviewsPagination
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = (
-        'category', 'genre', 'name', 'year'
-    )
+    pagination_class = TitlesPagination
+    filterset_class = TitlesFilter
+
+    def get_queryset(self):
+        return Title.objects.annotate(
+            rating=Avg('reviews__score')
+        )
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+    # permission_classes = [IsOwnerOrModeratorOrAdmin]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     filter_backends = (filters.SearchFilter,)
