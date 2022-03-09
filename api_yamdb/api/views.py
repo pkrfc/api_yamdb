@@ -1,6 +1,7 @@
 import uuid
-from django.db.models import Avg
+
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -8,13 +9,11 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-
 from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
 from .filters import TitlesFilter
-from .permissions import (AdminOrReadOnly, IsOnlyAdmin,
-                          ReviewCommentPermission)
+from .permissions import AdminOrReadOnly, IsOnlyAdmin, ReviewCommentPermission
 from .serializers import (CategoriesSerializer, CommentSerializer,
                           GenreSerializer, ProfileSerializer, ReviewSerializer,
                           SignupSerializer, TitlesSerializer, TokenSerializer,
