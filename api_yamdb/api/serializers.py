@@ -3,7 +3,6 @@ from datetime import datetime as dt
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-
 from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import ROLES, User
 
