@@ -3,7 +3,7 @@ from datetime import datetime as dt
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Comment, Genres, Review, Titles
+from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import ROLES, User
 
 
@@ -59,7 +59,6 @@ class TokenSerializer(serializers.ModelSerializer):
         )
 
 
-
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['name', 'slug']
@@ -84,7 +83,7 @@ class TitlesSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = '__all__'
-        model = Titles
+        model = Title
 
     def to_representation(self, obj):
         self.fields['genre'] = GenreSerializer(many=True)
@@ -99,6 +98,7 @@ class TitlesSerializer(serializers.ModelSerializer):
             )
         return value
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username',
@@ -111,7 +111,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if self.context['request'].method == 'PATCH':
             return data
         review_exists = Review.objects.filter(title=title_id,
-                                                 author=user).exists()
+                                              author=user).exists()
         if review_exists:
             raise serializers.ValidationError('Вы уже оставили отзыв.')
         return data
@@ -129,4 +129,3 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'author', 'text', 'pub_date')
         model = Comment
-

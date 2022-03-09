@@ -1,4 +1,3 @@
-
 import uuid
 
 from django.core.mail import send_mail
@@ -11,13 +10,11 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api.pagination import ReviewsPagination
-from api.permissions import AdminOrReadOnly
-from reviews.models import Categories, Comment, Genres, Review, Titles
+from .pagination import ReviewsPagination
+from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
-from .permissions import (AdminOrReadOnly, IsOnlyAdmin,
-                          IsOwnerOrModeratorOrAdmin, ReviewPermission)
+from .permissions import (AdminOrReadOnly, IsOnlyAdmin, ReviewPermission)
 from .serializers import (CategoriesSerializer, CommentSerializer,
                           GenreSerializer, ProfileSerializer, ReviewSerializer,
                           SignupSerializer, TitlesSerializer, TokenSerializer,
@@ -113,23 +110,24 @@ class CreateListViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 class CategoriesViewSet(CreateListViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (IsOnlyAdmin,)
     pagination_class = ReviewsPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
 
+
 class GenreViewSet(CreateListViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (IsOnlyAdmin,)
     pagination_class = ReviewsPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (AdminOrReadOnly,)
     pagination_class = ReviewsPagination
@@ -146,11 +144,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
 
     def get_queryset(self):
-        title = get_object_or_404(Titles, pk=self.kwargs.get('title_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         queryset = title.reviews.all()
         return queryset
 

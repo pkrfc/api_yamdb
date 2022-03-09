@@ -2,11 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
-ROLES = (
-        ('user', 'User'),
-        ('moderator', 'Moder'),
-        ('admin', 'Admin'),
-    )
+ROLES = (('user', 'User'),
+         ('moderator', 'Moder'),
+         ('admin', 'Admin'),)
 
 
 class User(AbstractUser):
@@ -55,5 +53,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-
