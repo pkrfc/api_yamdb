@@ -73,6 +73,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genres.objects.all(), many=True
@@ -89,9 +90,13 @@ class TitlesSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         self.fields['genre'] = GenreSerializer(many=True)
         self.fields['category'] = CategoriesSerializer()
-        # self.fields['category'] = CategoriesSerializer()
         return super(TitlesSerializer, self).to_representation(obj)
 
+    def get_rating(self, obj):
+        rating = obj.reviews.aggregate(Avg('score')).get('score__avg')
+        if not rating:
+            return rating
+        return round(rating, 1)
 
     def validate_year(self, value):
         year = dt.now().year

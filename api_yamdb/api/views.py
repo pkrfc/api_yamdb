@@ -13,8 +13,8 @@ from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
 from .filters import TitlesFilter
-from .pagination import TitlesPagination
-from .permissions import (AdminOrReadOnly, IsOnlyAdmin, ReviewPermission, IsOwnerOrModeratorOrAdmin)
+from .permissions import (AdminOrReadOnly, IsOnlyAdmin,
+                          ReviewCommentPermission)
 from .serializers import (CategoriesSerializer, CommentSerializer,
                           GenreSerializer, ProfileSerializer, ReviewSerializer,
                           SignupSerializer, TitlesSerializer, TokenSerializer,
@@ -147,7 +147,6 @@ class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = (AdminOrReadOnly,)
-    pagination_class = TitlesPagination
     filterset_class = TitlesFilter
 
     def get_queryset(self):
@@ -157,11 +156,9 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
-    # permission_classes = [IsOwnerOrModeratorOrAdmin]
+    permission_classes = [IsAuthenticatedOrReadOnly, ReviewCommentPermission]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    filter_backends = (filters.SearchFilter,)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -174,7 +171,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly, ReviewPermission]
+    permission_classes = [IsAuthenticatedOrReadOnly, ReviewCommentPermission]
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 

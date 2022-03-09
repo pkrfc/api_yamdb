@@ -23,28 +23,19 @@ class IsOnlyAdmin(permissions.BasePermission):
         )
 
 
-class IsOwnerOrModeratorOrAdmin(permissions.BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        return (
-            request.method in permissions.SAFE_METHODS
-            or obj.author == request.user
-        )
-
-
 class ReadOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS
 
 
-class ReviewPermission(permissions.BasePermission):
+class ReviewCommentPermission(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
         return (request.method in permissions.SAFE_METHODS
                 or obj.author == request.user
-                and request.user.is_moderator)
+                or request.user.is_moderator)
 
 
 class AdminOrReadOnly(permissions.BasePermission):
