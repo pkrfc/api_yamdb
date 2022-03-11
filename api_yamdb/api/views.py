@@ -102,7 +102,8 @@ def token(request):
     confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(User, username=username)
     if confirmation_code != user.confirmation_code:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response('Неверный код',
+                        status=status.HTTP_400_BAD_REQUEST)
     token = AccessToken.for_user(user)
     return Response({'token': {token}}, status=status.HTTP_200_OK)
 
