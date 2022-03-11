@@ -2,6 +2,7 @@ import uuid
 
 from django.core.mail import send_mail
 from django.db.models import Avg
+from django.db.models.functions import Round
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -14,7 +15,8 @@ from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
 from .filters import TitlesFilter
-from .permissions import AdminOrReadOnly, IsOnlyAdmin, ReviewCommentPermission
+from .permissions import (AdminOnly, IsOnlyAdmin,
+                          ReviewCommentPermission, ReadOnly)
 from .serializers import (CategoriesSerializer, CommentSerializer,
                           GenreSerializer, ProfileSerializer, ReviewSerializer,
                           SignupSerializer, TitlesSerializer, TokenSerializer,
@@ -110,7 +112,7 @@ def token(request):
 class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (ReadOnly | AdminOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -128,7 +130,7 @@ class CategoriesViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (ReadOnly | AdminOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
@@ -146,12 +148,13 @@ class GenreViewSet(viewsets.ModelViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = (ReadOnly | AdminOnly,)
     filterset_class = TitlesFilter
 
+    @action(detail=False, methods=['get'])
     def get_queryset(self):
         return Title.objects.annotate(
-            rating=Avg('reviews__score')
+            rating=Round(Avg('reviews__score'), precision=1)
         )
 
 
