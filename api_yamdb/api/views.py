@@ -9,6 +9,7 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from api_yamdb.settings import FROM_EMAIL
 from reviews.models import Categories, Comment, Genres, Review, Title
 from users.models import User
 
@@ -57,8 +58,8 @@ class UserViewSet(viewsets.ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save(role=request.user.role)
-            return Response(
-                data=serializer.data, status=status.HTTP_200_OK)
+
+            return Response(data=serializer.data)
 
 
 @api_view(['POST'])
@@ -66,8 +67,8 @@ class UserViewSet(viewsets.ModelViewSet):
 def sign_up(request):
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get('username')
-    email = serializer.validated_data.get('email')
+    username = serializer.validated_data['username']
+    email = serializer.validated_data['email']
     user_email = User.objects.filter(email=email)
     user_name = User.objects.filter(username=username)
     if user_email.exists() or user_name.exists():
@@ -75,14 +76,14 @@ def sign_up(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     confirmation_code = str(uuid.uuid4())
-    User.objects.create(
+    User.objects.get_or_create(
         username=username,
         email=email,
         confirmation_code=confirmation_code)
     send_mail(
         subject='Код подтверждения yamdb.ru',
         message=f'"confirmation_code": "{confirmation_code}"',
-        from_email='yamdb@yamdb.ru',
+        from_email=FROM_EMAIL,
         recipient_list=[email, ],
         fail_silently=True
     )
@@ -97,13 +98,13 @@ def sign_up(request):
 def token(request):
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get('username')
-    confirmation_code = serializer.validated_data.get('confirmation_code')
+    username = serializer.validated_data['username']
+    confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(User, username=username)
     if confirmation_code != user.confirmation_code:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     token = AccessToken.for_user(user)
-    return Response({'token': f'{token}'}, status=status.HTTP_200_OK)
+    return Response({'token': {token}}, status=status.HTTP_200_OK)
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
