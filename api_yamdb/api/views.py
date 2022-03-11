@@ -98,6 +98,7 @@ def sign_up(request):
 @api_view(['POST'])
 @permission_classes((AllowAny,))
 def token(request):
+
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
