@@ -71,12 +71,6 @@ def sign_up(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
     email = serializer.validated_data['email']
-    user_email = User.objects.filter(email=email)
-    user_name = User.objects.filter(username=username)
-    if user_email.exists() or user_name.exists():
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST
-        )
     confirmation_code = str(uuid.uuid4())
     User.objects.get_or_create(
         username=username,
@@ -108,7 +102,7 @@ def token(request):
         return Response('Неверный код',
                         status=status.HTTP_400_BAD_REQUEST)
     token = AccessToken.for_user(user)
-    return Response({'token': {token}}, status=status.HTTP_200_OK)
+    return Response({'token': token}, status=status.HTTP_200_OK)
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
